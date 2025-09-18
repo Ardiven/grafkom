@@ -1,3 +1,5 @@
+import { MyObject } from "./MyObject.js";
+
 function main() {
     /** @type {HTMLCanvasElement} */
     var CANVAS = document.getElementById("mycanvas");
@@ -123,6 +125,25 @@ function main() {
     var FRICTION = 0.05;
     var dX = 0, dY = 0;
 
+    // var Object1 = new MyObject(GL, SHADER_PROGRAM, _position, _color, _Mmatrix);
+    // var Object2 = new MyObject(GL, SHADER_PROGRAM, _position, _color, _Mmatrix);
+    // var Object3 = new MyObject(GL, SHADER_PROGRAM, _position, _color, _Mmatrix);
+
+    // Object1.childs.push(Object2);
+    // Object2.childs.push(Object3);
+
+    // LIBS.translateX(Object2.POSITION_MATRIX, 5);
+    // LIBS.scaleX(Object2.POSITION_MATRIX, 0.75);
+    // LIBS.scaleY(Object2.POSITION_MATRIX, 0.75);
+    // LIBS.scaleZ(Object2.POSITION_MATRIX, 0.75);
+
+    // LIBS.translateY(Object3.POSITION_MATRIX, 4);
+    // LIBS.scaleX(Object3.POSITION_MATRIX, 0.75);
+    // LIBS.scaleY(Object3.POSITION_MATRIX, 0.75);
+    // LIBS.scaleZ(Object3.POSITION_MATRIX, 0.75);
+
+    // Object1.setup();
+
     var mouseDown = function (e) {
         drag = true;
         x_prev = e.pageX, y_prev = e.pageY;
@@ -191,22 +212,135 @@ function main() {
         GL.uniformMatrix4fv(_Mmatrix, false, MOVEMATRIX);
 
         // Instance 1
-LIBS.set_I4(MOVEMATRIX);
-LIBS.translateX(MOVEMATRIX, -2);
-LIBS.rotateY(MOVEMATRIX, THETA);
-LIBS.rotateX(MOVEMATRIX, PHI);
+        // LIBS.set_I4(MOVEMATRIX);
+        // LIBS.translateX(MOVEMATRIX, -2);
+        // LIBS.rotateY(MOVEMATRIX, THETA);
+        // LIBS.rotateX(MOVEMATRIX, PHI);
 
-GL.uniformMatrix4fv(_Mmatrix, false, MOVEMATRIX);
-GL.drawElements(GL.TRIANGLES, cube_faces.length, GL.UNSIGNED_SHORT, 0);
+        // LIBS.set_I4(MOVEMATRIX);
+        // var temp = LIBS.get_I4();
 
-// Instance 2 (reuse VBO/EBO)
-LIBS.set_I4(MOVEMATRIX2);
-LIBS.translateX(MOVEMATRIX2, 2);
-LIBS.rotateY(MOVEMATRIX2, THETA);
-LIBS.rotateX(MOVEMATRIX2, PHI);
+        // // Translasi -P (-2,0,0)
+        // LIBS.translateX(temp, -2);
+        // MOVEMATRIX = LIBS.multiply(MOVEMATRIX, temp);
 
-GL.uniformMatrix4fv(_Mmatrix, false, MOVEMATRIX2);
-GL.drawElements(GL.TRIANGLES, cube_faces.length, GL.UNSIGNED_SHORT, 0);
+        // // Rotasi Y
+        // temp = LIBS.get_I4();
+        // LIBS.rotateY(temp, time * 0.001);
+        // MOVEMATRIX = LIBS.multiply(MOVEMATRIX, temp);
+
+        // // Translasi +P (2,0,0)
+        // temp = LIBS.get_I4();
+        // LIBS.translateX(temp, 2);
+        // MOVEMATRIX = LIBS.multiply(MOVEMATRIX, temp)
+
+        LIBS.set_I4(MOVEMATRIX);
+        var temp = LIBS.get_I4();
+
+        // Translasi -P1 = (0, 3, 0)
+        LIBS.translateY(temp, 3);
+        MOVEMATRIX = LIBS.multiply(MOVEMATRIX, temp);
+
+        // Rotasi X 90°
+        temp = LIBS.get_I4();
+        LIBS.rotateX(temp, Math.PI/2);
+        MOVEMATRIX = LIBS.multiply(MOVEMATRIX, temp);
+
+        // Rotasi Y -45°
+        temp = LIBS.get_I4();
+        LIBS.rotateY(temp, -Math.PI/4);
+        MOVEMATRIX = LIBS.multiply(MOVEMATRIX, temp);
+
+        // Rotasi Z sesuai waktu
+        temp = LIBS.get_I4();
+        LIBS.rotateZ(temp, time * 0.001);
+        MOVEMATRIX = LIBS.multiply(MOVEMATRIX, temp);
+
+        // Balikkan Y
+        temp = LIBS.get_I4();
+        LIBS.rotateY(temp, Math.PI/4);
+        MOVEMATRIX = LIBS.multiply(MOVEMATRIX, temp);
+
+        // Balikkan X
+        temp = LIBS.get_I4();
+        LIBS.rotateX(temp, -Math.PI/2);
+        MOVEMATRIX = LIBS.multiply(MOVEMATRIX, temp);
+
+        // Translasi balik
+        temp = LIBS.get_I4();
+        LIBS.translateY(temp, -3);
+        MOVEMATRIX = LIBS.multiply(MOVEMATRIX, temp);
+
+
+
+        GL.uniformMatrix4fv(_Mmatrix, false, MOVEMATRIX);
+        GL.drawElements(GL.TRIANGLES, cube_faces.length, GL.UNSIGNED_SHORT, 0);
+
+        // Instance 2 (reuse VBO/EBO)
+        LIBS.set_I4(MOVEMATRIX2);
+        LIBS.translateX(MOVEMATRIX2, 2);
+        LIBS.rotateY(MOVEMATRIX2, THETA);
+        LIBS.rotateX(MOVEMATRIX2, PHI);
+
+        LIBS.set_I4(MOVEMATRIX2);
+        var temp = LIBS.get_I4();
+
+        // Translasi -P (-2,0,0)
+        LIBS.translateX(temp, -2);
+        MOVEMATRIX2 = LIBS.multiply(MOVEMATRIX2, temp);
+
+        // Rotasi Y
+        temp = LIBS.get_I4();
+        LIBS.rotateY(temp, time * 0.001);
+        MOVEMATRIX2 = LIBS.multiply(MOVEMATRIX2, temp);
+
+        // Translasi +P (2,0,0)
+        temp = LIBS.get_I4();
+        LIBS.translateX(temp, -2);
+        MOVEMATRIX2 = LIBS.multiply(MOVEMATRIX2, temp)
+
+        // LIBS.set_I4(MOVEMATRIX2);
+        // var temp = LIBS.get_I4();
+
+        // // Translasi -P1 = (0, 3, 0)
+        // LIBS.translateY(temp, 3);
+        // MOVEMATRIX2 = LIBS.multiply(MOVEMATRIX2, temp);
+
+        // // Rotasi X 90°
+        // temp = LIBS.get_I4();
+        // LIBS.rotateX(temp, Math.PI/2);
+        // MOVEMATRIX2 = LIBS.multiply(MOVEMATRIX2, temp);
+
+        // // Rotasi Y -45°
+        // temp = LIBS.get_I4();
+        // LIBS.rotateY(temp, -Math.PI/4);
+        // MOVEMATRIX2 = LIBS.multiply(MOVEMATRIX2, temp);
+
+        // // Rotasi Z sesuai waktu
+        // temp = LIBS.get_I4();
+        // LIBS.rotateZ(temp, time * 0.0005);
+        // MOVEMATRIX2 = LIBS.multiply(MOVEMATRIX2, temp);
+
+        // // Balikkan Y
+        // temp = LIBS.get_I4();
+        // LIBS.rotateY(temp, Math.PI/4);
+        // MOVEMATRIX2 = LIBS.multiply(MOVEMATRIX2, temp);
+
+        // // Balikkan X
+        // temp = LIBS.get_I4();
+        // LIBS.rotateX(temp, -Math.PI/2);
+        // MOVEMATRIX2 = LIBS.multiply(MOVEMATRIX2, temp);
+
+        // // Translasi balik
+        // temp = LIBS.get_I4();
+        // LIBS.translateY(temp, -3);
+        // MOVEMATRIX2 = LIBS.multiply(MOVEMATRIX2, temp);
+
+        GL.uniformMatrix4fv(_Mmatrix, false, MOVEMATRIX2);
+        GL.drawElements(GL.TRIANGLES, cube_faces.length, GL.UNSIGNED_SHORT, 0);
+
+
+        
 
         if (!drag) {
             dX *= (1 - FRICTION);
@@ -225,6 +359,18 @@ GL.drawElements(GL.TRIANGLES, cube_faces.length, GL.UNSIGNED_SHORT, 0);
 
         GL.flush();
         window.requestAnimationFrame(animate);
+
+        // var dt = t - lastTime; lastTime = t;
+
+        // LIBS.rotateY(Object1.MOVE_MATRIX, dt * 0.001);
+        // LIBS.rotateX(Object2.MOVE_MATRIX, dt * 0.001);
+        // LIBS.rotateZ(Object3.MOVE_MATRIX, dt * 0.001);
+
+        // GL.uniformMatrix4fv(_Pmatrix, false, PROJMATRIX);
+        // GL.uniformMatrix4fv(_Vmatrix, false, VIEWMATRIX);
+
+        // Object1.render(LIBS.get_I4());
+        // requestAnimationFrame(animate);
     };
     animate(0);
 }

@@ -68,6 +68,27 @@ var LIBS = {
         m[5] = c * m[5] + s * mv4;
         m[9] = c * m[9] + s * mv8;
     },
+    scaleX: function (m, t) {
+        m[0] *= t;
+    },
+    scaleY: function (m, t) {
+        m[5] *= t;
+    },
+    scaleZ: function (m, t) {
+        m[10] *= t;
+    },
+    multiply: function (m1, m2) {
+        var rm = this.get_I4();
+        var N = 4;
+        for (var i = 0; i < N; i++) {
+            for (var j = 0; j < N; j++) {
+                rm[i * N + j] = 0;
+                for (var k = 0; k < N; k++)
+                    rm[i * N + j] += m1[i * N + k] * m2[k * N + j];
+            }
+        }
+        return rm;
+    },
 
     translateZ: function (m, t) { m[14] += t; },
     translateX: function (m, t) { m[12] += t; },
