@@ -18,25 +18,28 @@ function main() {
 
     /*========================= SHADERS ========================= */
     var shader_vertex_source = `
-       attribute vec3 position;
-uniform mat4 Pmatrix, Vmatrix, Mmatrix;
-attribute vec2 uv;
-varying vec2 vUV;
+        attribute vec3 position;
+        uniform mat4 Pmatrix, Vmatrix, Mmatrix;
+        attribute vec3 color;
+        varying vec3 vColor;
 
-void main(void) {
-    gl_Position = Pmatrix * Vmatrix * Mmatrix * vec4(position, 1.);
-    vUV = uv;
-}`;
+        void main(void) {
+            gl_Position = Pmatrix * Vmatrix * Mmatrix * vec4(position, 1.);
+            vColor = color;
+        }`;
 
 
     var shader_fragment_source = `
         precision mediump float;
-uniform sampler2D sampler;
-varying vec2 vUV;
+        varying vec3 vColor;
+        uniform float greyScality;
 
-void main(void) {
-    gl_FragColor = texture2D(sampler, vUV);
-}`;
+        void main(void) {
+            float greyScaleValue = (vColor.r + vColor.b + vColor.g) / 3.0;
+            vec3 greyScaleColor = vec3(greyScaleValue, greyScaleValue, greyScaleValue);
+            vec3 color = mix(vColor, greyScaleColor, greyScality);
+            gl_FragColor = vec4(color, 1.0);
+        }`;
 
 
     var compile_shader = function (source, type, typeString) {
@@ -65,63 +68,39 @@ void main(void) {
     GL.enableVertexAttribArray(_position);
 
 
-    
+    var _color = GL.getAttribLocation(SHADER_PROGRAM, "color");
+    GL.enableVertexAttribArray(_color);
 
     var _Pmatrix = GL.getUniformLocation(SHADER_PROGRAM, "Pmatrix");
     var _Vmatrix = GL.getUniformLocation(SHADER_PROGRAM, "Vmatrix");
     var _Mmatrix = GL.getUniformLocation(SHADER_PROGRAM, "Mmatrix");
 
-    var _uv = GL.getAttribLocation(SHADER_PROGRAM, "uv");
-GL.enableVertexAttribArray(_uv);
+    var _greyscality = GL.getUniformLocation(SHADER_PROGRAM, "greyScality");
 
-var _sampler = GL.getUniformLocation(SHADER_PROGRAM, "sampler");
-
-GL.useProgram(SHADER_PROGRAM);
-GL.uniform1i(_sampler, 0); // sampler → TEXTURE0
+    GL.useProgram(SHADER_PROGRAM);
 
 
     /*======================== THE TRIANGLE ======================== */
     // POINTS:
     var cube_vertex = [
-    -1,-1,-1,    0,0,
-     1,-1,-1,    1,0,
-     1, 1,-1,    1,1,
-    -1, 1,-1,    0,1,
-
-    -1,-1, 1,    0,0,
-     1,-1, 1,    1,0,
-     1, 1, 1,    1,1,
-    -1, 1, 1,    0,1,
-
-    -1,-1,-1,    0,0,
-    -1, 1,-1,    0,1,
-    -1, 1, 1,    1,1,
-    -1,-1, 1,    1,0,
-
-     1,-1,-1,    0,0,
-     1, 1,-1,    0,1,
-     1, 1, 1,    1,1,
-     1,-1, 1,    1,0,
-
-    -1,-1,-1,    0,0,
-    -1,-1, 1,    1,0,
-     1,-1, 1,    1,1,
-     1,-1,-1,    0,1,
-
-    -1, 1,-1,    0,0,
-    -1, 1, 1,    1,0,
-     1, 1, 1,    1,1,
-     1, 1,-1,    0,1
-];
+        -1, -1, -1, 0, 0, 0,
+        1, -1, -1, 1, 0, 0,
+        1,  1, -1, 1, 1, 0,
+        -1,  1, -1, 0, 1, 0,
+        -1, -1,  1, 0, 0, 1,
+        1, -1,  1, 1, 0, 1,
+        1,  1,  1, 1, 1, 1,
+        -1,  1,  1, 0, 1, 1
+    ];
 
     var cube_faces = [
-    0, 1, 2,   0, 2, 3,
-    4, 5, 6,   4, 6, 7,
-    8, 9,10,   8,10,11,
-   12,13,14,  12,14,15,
-   16,17,18,  16,18,19,
-   20,21,22,  20,22,23
-];
+        0, 1, 2, 0, 2, 3,
+        4, 5, 6, 4, 6, 7,
+        0, 3, 7, 0, 4, 7,
+        1, 2, 6, 1, 5, 6,
+        2, 3, 6, 3, 7, 6,
+        0, 1, 5, 0, 4, 5
+    ];
 
     var CUBE_VERTEX = GL.createBuffer();
     GL.bindBuffer(GL.ARRAY_BUFFER, CUBE_VERTEX);
@@ -132,7 +111,8 @@ GL.uniform1i(_sampler, 0); // sampler → TEXTURE0
     GL.bufferData(GL.ELEMENT_ARRAY_BUFFER, new Uint16Array(cube_faces), GL.STATIC_DRAW);
 
     var PROJMATRIX = LIBS.get_projection(40, CANVAS.width / CANVAS.height, 1, 100);
-    var MOVEMATRIX = LIBS.get_I4();
+    var MOVEMATRIX  = LIBS.get_I4();
+    var MOVEMATRIX2 = LIBS.get_I4();
     var VIEWMATRIX = LIBS.get_I4();
 
     LIBS.translateZ(VIEWMATRIX, -6);
@@ -188,29 +168,6 @@ GL.uniform1i(_sampler, 0); // sampler → TEXTURE0
 
     window.addEventListener("keydown", keyDown, false);
 
-    /========================= TEXTURES =========================/
-    var load_texture = function (image_URL) {
-        var texture = GL.createTexture();
-        var image = new Image();
-
-        image.src = image_URL;
-        image.onload = function () {
-            GL.bindTexture(GL.TEXTURE_2D, texture);
-            GL.pixelStorei(GL.UNPACK_FLIP_Y_WEBGL, true);
-            GL.texImage2D(GL.TEXTURE_2D, 0, GL.RGBA, GL.RGBA, GL.UNSIGNED_BYTE, image);
-            GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, GL.LINEAR);
-            GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.LINEAR);
-            GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, GL.CLAMP_TO_EDGE);
-            GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_T, GL.CLAMP_TO_EDGE);
-            GL.bindTexture(GL.TEXTURE_2D, null);
-        };
-
-        return texture;
-    };
-
-    var cube_texture = load_texture("texture.png");
-
-
     /*========================= DRAWING ========================= */
     GL.enable(GL.DEPTH_TEST);
     GL.depthFunc(GL.LEQUAL);
@@ -233,16 +190,23 @@ GL.uniform1i(_sampler, 0); // sampler → TEXTURE0
         GL.uniformMatrix4fv(_Vmatrix, false, VIEWMATRIX);
         GL.uniformMatrix4fv(_Mmatrix, false, MOVEMATRIX);
 
-        GL.bindBuffer(GL.ARRAY_BUFFER, CUBE_VERTEX);
-        GL.vertexAttribPointer(_position, 3, GL.FLOAT, false, 4 * (3 + 2), 0);
-        GL.vertexAttribPointer(_uv,       2, GL.FLOAT, false, 4 * (3 + 2), 4 * 3);
-        GL.activeTexture(GL.TEXTURE0);
-        GL.bindTexture(GL.TEXTURE_2D, cube_texture);
-        GL.drawElements(GL.TRIANGLES, cube_faces.length, GL.UNSIGNED_SHORT, 0);
+        // Instance 1
+LIBS.set_I4(MOVEMATRIX);
+LIBS.translateX(MOVEMATRIX, -2);
+LIBS.rotateY(MOVEMATRIX, THETA);
+LIBS.rotateX(MOVEMATRIX, PHI);
 
-        LIBS.set_I4(MOVEMATRIX);
-        LIBS.rotateY(MOVEMATRIX, THETA);
-        LIBS.rotateX(MOVEMATRIX, PHI);
+GL.uniformMatrix4fv(_Mmatrix, false, MOVEMATRIX);
+GL.drawElements(GL.TRIANGLES, cube_faces.length, GL.UNSIGNED_SHORT, 0);
+
+// Instance 2 (reuse VBO/EBO)
+LIBS.set_I4(MOVEMATRIX2);
+LIBS.translateX(MOVEMATRIX2, 2);
+LIBS.rotateY(MOVEMATRIX2, THETA);
+LIBS.rotateX(MOVEMATRIX2, PHI);
+
+GL.uniformMatrix4fv(_Mmatrix, false, MOVEMATRIX2);
+GL.drawElements(GL.TRIANGLES, cube_faces.length, GL.UNSIGNED_SHORT, 0);
 
         if (!drag) {
             dX *= (1 - FRICTION);
@@ -252,9 +216,10 @@ GL.uniform1i(_sampler, 0); // sampler → TEXTURE0
         }
 
         GL.bindBuffer(GL.ARRAY_BUFFER, CUBE_VERTEX);
-        GL.vertexAttribPointer(_position, 3, GL.FLOAT, false, 4 * (3 + 2), 0);
-        GL.vertexAttribPointer(_uv, 2, GL.FLOAT, false, 4 * (3 + 2), 4 * 3);
+        GL.vertexAttribPointer(_position, 3, GL.FLOAT, false, 4 * (3 + 3), 0);
+        GL.vertexAttribPointer(_color, 3, GL.FLOAT, false, 4 * (3 + 3), 4 * 3);
         GL.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, CUBE_FACES);
+        GL.uniform1f(_greyscality, 0.7); // 0.0 = warna asli, 1.0 = greyscale penuh
         GL.drawElements(GL.TRIANGLES, cube_faces.length, GL.UNSIGNED_SHORT, 0);
 
 
